@@ -133,6 +133,48 @@
     <script>
      const appState = {};
       
+    const validateWithLuhn = (digits) =>{
+        let value = digits.join("");
+        if (/[^0-9-\s]+/.test(value)) return false;
+        
+        let nCheck = 0;
+        let nDigit = 0;
+        let bEven = 0;
+        value = value.replace(/\D/g, "");
+      
+        for (let n = value.length - 1; n>=0; n--){
+          let cDigit = value.charAt(n);
+          let nDigit = parseInt(cDigit, 10);
+          if (bEven){
+            if ((nDigit *=2) > 9) nDigit -= 9;
+          }
+          nCheck += nDigit;
+          bEven = !bEven;
+        }
+        return (nCheck % 10) ==0;
+      };
+      
+      const validateCardNumber = () =>{
+        const firstInput = document.querySelector("[data-cc-digits] > input:nth-child(1)").value.split("");
+        const secondInput = document.querySelector("[data-cc-digits] > input:nth-child(2)").value.split("");
+        const thirdInput = document.querySelector("[data-cc-digits] > input:nth-child(3)").value.split("");
+        const fourthInput = document.querySelector("[data-cc-digits] > input:nth-child(4)").value.split("");
+        
+        const totalInputs = firstInput.concat(secondInput, thirdInput, fourthInput);
+        
+        const isValid = validateWithLuhn(totalInputs);
+        console.log(isValid);
+        
+        const ccDigits = document.querySelector("div[data-cc-digits]");
+        if (isValid){
+          ccDigits.classList.remove("is-invalid");
+          return true;
+        } else{
+          ccDigits.classList.add("is-invalid");
+          return false;
+        }
+      };
+      
       const formatAsMoney = (amount, buyerCountry) => {
       switch (countries.country === buyerCountry) {
           case countries.country:
@@ -164,7 +206,7 @@
         uiCanInteract();
       };
       
-      const fetchBill = () => {
+    const fetchBill = () => {
         const api ="https://randomapi.com/api/006b08a801d82d0c9824dcfdfdfa3b3c"
         fetch(api)
         .then(response => response.json())
@@ -191,8 +233,8 @@
       }
       
     const detectCardType = ({ target }) => {
-        const firstDigit = target.value[0];
-        const firstValue = Number(firstDigit);
+        const { value } = target;
+        const firstValue = Number(value[0]);
         const cardType = firstValue === 4 ? "is-visa" : firstValue === 5 ? "is-mastercard" : "";
         const creditCard = document.querySelector("[data-credit-card]");
         const cardTypeElement = document.querySelector("[data-card-type]");
@@ -202,7 +244,7 @@
           cardTypeElement.src = supportedCards.visa
         } else if (cardType === "is-mastercard") {
           creditCard.classList.add("is-mastercard");
-          cardTypeElement.src = supportCards.mastercard;
+          cardTypeElement.src = supportedCards.mastercard;
         } else {
           creditCard.classList.remove("is-mastercard");
           creditCard.classList.remove("is-visa");
@@ -245,7 +287,7 @@
         visa, mastercard
       };
       
-    const uiCanInteract = () => {
+    const uiCanInteract = ({ target }) => {
         const cardTypeElement = document.querySelector("[data-card-type]");
         const firstInputElement = document.querySelector("[data-cc-digits] > input:nth-child(1)");
         firstInputElement.addEventListener("blur", detectCardType);
@@ -262,7 +304,22 @@
         
         firstInputElement.focus();
       };
-     
+      
+      const displayCartTotal = ({ results }) => {
+        const [data] = results;
+        const {itemsInCart, buyerCountry } = data;
+        appState.items = itemsInCart;
+        appState.country = buyerCountry;
+        appState.bill = itemsInCart.reduce((total, item) => {
+          return total + (item.qty * item.price);
+        }, 0);
+        appState.billFormatted = formatAsMoney(appState.bill, appState.country);
+        appState.textContent = appState.billFormatted;
+        const billElem = document.querySelector("[data-bill]");
+        billElem.innerHTML = appState.textContent;
+        uiCanInteract();
+      };
+
       const countries = [
         {
           code: "US",
