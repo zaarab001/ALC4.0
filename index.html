@@ -332,12 +332,17 @@
         let {itemsInCart, buyerCountry } = data;
         appState.items = itemsInCart;
         appState.country = buyerCountry;
-        appState.bill = itemsInCart.reduce((acc, cur) => acc+(cur.price * cur.qty),0);
-        appState.billFormatted=formatAsMoney(appState.bill, appState.country);
-        document.querySelector("[data-bill]").textContent=appState.billFormatted;
-        billElem.textContent = appState.billFormatted;
+        appState.bill = itemsInCart.reduce((total, item) => {
+          return total + (item.qty * item.price);
+        }, 0);
+        appState.billFormatted = formatAsMoney(appState.bill, appState.country);
+        appState.textContent = appState.billFormatted;
+        const billElem = document.querySelector("[data-bill]");
+        billElem.innerHTML = appState.textContent;
         uiCanInteract();
       };
+
+
       
       const fetchBill = () =>{
         const api ="https://randomapi.com/api/006b08a801d82d0c9824dcfdfdfa3b3c"
